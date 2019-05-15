@@ -2,27 +2,35 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ServiceSchema = new Schema({
-    title:{
+    title: {
         type: String,
         required: true
     },
-    short_description:{
+    short_description: {
         type: String,
-      
+
     },
-    thumbnail:{
+    public: {
+        type: Boolean,
+        default: false
+    },
+    thumbnail: {
         type: String,
-      
+
     },
-    about:{
-        type:String,
-       
+    about: {
+        type: String,
+
     },
-    media:{
-        type:[]
+    mediaPhoto: {
+        type: []
     },
-   
-    date:{
+    mediaVideo: {
+        type: []
+    },
+    banner: String,
+
+    date: {
         type: Date,
         default: Date.now
     }

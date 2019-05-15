@@ -10,8 +10,8 @@ const keys = require('../../config/key');
 const User = require('../../models/User');
 
 // //validate user
-// const  validateRegisterInput = require('../../validation/register')
-// const  validateLoginInput = require('../../validation/login')
+const validateRegisterInput = require('../../Validator/register')
+const validateLoginInput = require('../../Validator/login')
 
 //@routes GET api/users/test
 //@desc   Test users route
@@ -23,15 +23,22 @@ router.get('/test', (req, res) => res.json({ msg: 'Users work' }));
 //@access Public
 
 router.post('/register', (req, res) => {
+
+  const { errors, isValid } = validateRegisterInput(req.body)
+
   //Check Validation
+  if (!isValid) {
+    return res.status(400).json(errors)
+  }
 
   console.log('registering user......................////////////');
   User.findOne({ email: req.body.email }).then(user => {
+
     if (user) {
-      return res.status(400).json({
-        error: 'Email already exists',
-      });
-    } else if (req.body.email === 'dhanmoninath@gmail.com') {
+      errors.email = 'Email already exists';
+      return res.status(400).json(errors)
+    }
+    else if (req.body.email === 'dhanmoninath@gmail.com') {
       const newUser = new User({
         admin: true,
         name: req.body.name,
@@ -108,9 +115,17 @@ router.post('/register', (req, res) => {
 //@access Public
 
 router.post('/login', (req, res) => {
+  const { errors, isValid } = validateLoginInput(req.body)
+
+  //Check Validation
+  if (!isValid) {
+    return res.status(400).json(errors)
+  }
+
   User.findOne({ email: req.body.email }).then(user => {
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      errors.email = 'User not found'
+      return res.status(404).json(errors)
     }
 
     bcrypt.compare(req.body.password, user.password).then(isMatch => {
@@ -130,7 +145,8 @@ router.post('/login', (req, res) => {
           });
         });
       } else {
-        return res.status(400).json({ errors: 'password incorrect' });
+        errors.password = 'Email password pair doesnot match!'
+        return res.status(400).json(errors)
       }
     });
   });
