@@ -1,18 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const passport = require('passport');
-const bodYParser = require('body-parser');
-const multer = require('multer');
-const keys = require('../../config/key');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const passport = require("passport");
+const bodYParser = require("body-parser");
+const multer = require("multer");
+const keys = require("../../config/key");
 //import model
-const User = require('../../models/User');
-const Service = require('../../models/Services');
-const fs = require('fs');
-const nodemailer = require('nodemailer');
-const mg = require('nodemailer-mailgun-transport');
-const cloudinary = require('cloudinary');
+const User = require("../../models/User");
+const Service = require("../../models/Services");
+const fs = require("fs");
+const nodemailer = require("nodemailer");
+const mg = require("nodemailer-mailgun-transport");
+const cloudinary = require("cloudinary");
 cloudinary.config({
   cloud_name: keys.CLOUD_NAME,
   api_key: keys.API_KEY,
@@ -21,12 +21,12 @@ cloudinary.config({
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './uploads/');
+    cb(null, "./uploads/");
   },
   filename: (req, file, cb) => {
     console.log(file);
     const now = new Date().toISOString();
-    const date = now.replace(/:/g, '-');
+    const date = now.replace(/:/g, "-");
     cb(null, date + file.originalname);
   },
 });
@@ -36,330 +36,293 @@ const upload = multer({
   //dest:'uploads/',
   fileFilter: (req, file, cb) => {
     if (
-      file.mimetype == 'image/jpg' ||
-      file.mimetype == 'image/png' ||
-      file.mimetype == 'image/jpeg'
+      file.mimetype == "image/jpg" ||
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpeg"
     ) {
-      console.log('uploading...')
+      console.log("uploading...");
       cb(null, true);
     } else {
-      console.log('error')
-      cb(new Error('file not supported'), false);
+      console.log("error");
+      cb(new Error("file not supported"), false);
     }
   },
 });
 
-const deleteFile = file => {
-  fs.unlink('./uploads/' + file, function (err) {
-    if (err && err.code == 'ENOENT') {
+const deleteFile = (file) => {
+  fs.unlink("./uploads/" + file, function (err) {
+    if (err && err.code == "ENOENT") {
       // file doens't exist
       console.info("File doesn't exist, won't remove it.");
     } else if (err) {
       // other errors, e.g. maybe we don't have enough permission
-      console.error('Error occurred while trying to remove file');
+      console.error("Error occurred while trying to remove file");
     } else {
       console.info(`removed`);
     }
   });
 };
 
-
-
 router.post(
-  '/postService',
+  "/postService",
 
-  upload.single('thumbnail'),
-  passport.authenticate('jwt', { session: false }),
+  upload.single("thumbnail"),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    console.log('yeah!!!!!!!')
+    console.log("yeah!!!!!!!");
 
-    if (req.user.email === 'dhanmoninath@gmail.com') {
-      console.log('uploading.......')
+    if (req.user.email === "dhanmoninath@gmail.com") {
+      console.log("uploading.......");
       const result = await cloudinary.uploader.upload(req.file.path);
       const newService = new Service({
         title: req.body.title,
         short_description: req.body.short_description,
         about: req.body.about,
         thumbnail: result.secure_url,
-        banner: '',
-        public: false
+        banner: "",
+        public: false,
       });
       newService
         .save()
-        .then(service => {
+        .then((service) => {
           console.log(service);
           res.status(200).json(service);
         })
-        .catch(err => console.log(err))
+        .catch((err) => console.log(err));
 
       if (result.secure_url) {
         deleteFile(req.file.filename);
-        console.log('deleting');
+        console.log("deleting");
       }
     } else {
-      return res.status(401).json({ msg: 'SOmething went wrong' })
+      return res.status(401).json({ msg: "SOmething went wrong" });
     }
-
-
-
   }
 );
 
-//Update service 
+//Update service
 
 router.post(
-  '/updateService/:id',
+  "/updateService/:id",
 
-  upload.single('thumbnail'),
-  passport.authenticate('jwt', { session: false }),
+  upload.single("thumbnail"),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    console.log('updating...', req.params.id)
+    console.log("updating...", req.params.id);
 
-    if (req.user.email === 'dhanmoninath@gmail.com') {
-
+    if (req.user.email === "dhanmoninath@gmail.com") {
       const result = await cloudinary.uploader.upload(req.file.path);
 
-      Service.findById({ _id: req.params.id }).then(service => {
-        Service.findOneAndUpdate(
-          { _id: req.params.id },
-          {
-            $set: {
-              title: req.body.title,
-              short_description: req.body.short_description,
-              about: req.body.about,
-              thumbnail: result.secure_url,
-            }
-          },
-          { new: true }
-        ).then(service => {
-          console.log('service===', service)
-          res.json(service)
+      Service.findById({ _id: req.params.id })
+        .then((service) => {
+          Service.findOneAndUpdate(
+            { _id: req.params.id },
+            {
+              $set: {
+                title: req.body.title,
+                short_description: req.body.short_description,
+                about: req.body.about,
+                thumbnail: result.secure_url,
+              },
+            },
+            { new: true }
+          ).then((service) => {
+            console.log("service===", service);
+            res.json(service);
+          });
         })
-      })
 
-
-        .catch(err => console.log(err))
+        .catch((err) => console.log(err));
 
       if (result.secure_url) {
         deleteFile(req.file.filename);
-        console.log('deleting');
+        console.log("deleting");
       }
     } else {
-      return res.status(401).json({ msg: 'SOmething went wrong' })
+      return res.status(401).json({ msg: "SOmething went wrong" });
     }
-
-
-
   }
 );
 
-//add / edit about 
+//add / edit about
 router.post(
-  '/updateServiceAbout/:id',
+  "/updateServiceAbout/:id",
 
-  passport.authenticate('jwt', { session: false }),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    console.log('updating...', req.body)
+    console.log("updating...", req.body);
 
-    if (req.user.email === 'dhanmoninath@gmail.com') {
-
-
-
-      Service.findById({ _id: req.params.id }).then(service => {
-        Service.findOneAndUpdate(
-          { _id: req.params.id },
-          {
-            $set: {
-              about: req.body.about
-            }
-          },
-          { new: true }
-        ).then(service => {
-          console.log('service===', service)
-          res.json(service)
+    if (req.user.email === "dhanmoninath@gmail.com") {
+      Service.findById({ _id: req.params.id })
+        .then((service) => {
+          Service.findOneAndUpdate(
+            { _id: req.params.id },
+            {
+              $set: {
+                about: req.body.about,
+              },
+            },
+            { new: true }
+          ).then((service) => {
+            console.log("service===", service);
+            res.json(service);
+          });
         })
-      }
-      )
-        .catch(err => console.log(err))
-
+        .catch((err) => console.log(err));
     } else {
-      return res.status(401).json({ msg: 'SOmething went wrong' })
+      return res.status(401).json({ msg: "SOmething went wrong" });
     }
-
-
-
   }
 );
 
 //Chnage visibility
 
-router.post('/changeVisibility/:id',
+router.post(
+  "/changeVisibility/:id",
 
-  passport.authenticate('jwt', { session: false }),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    if (req.user.email === 'dhanmoninath@gmail.com') {
-
-
-      Service.findById({ _id: req.params.id }).then(service => {
-        if (service.public === false) {
-          Service.findOneAndUpdate(
-            { _id: req.params.id },
-            { $set: { public: true } },
-            { new: true }
-          ).then(service => res.json(service))
-        } else {
-          Service.findOneAndUpdate(
-            { _id: req.params.id },
-            { $set: { public: false } },
-            { new: true }
-          ).then(service => res.json(service))
-        }
-
-      }
-      ).catch(err => console.log(err))
-
+    if (req.user.email === "dhanmoninath@gmail.com") {
+      Service.findById({ _id: req.params.id })
+        .then((service) => {
+          if (service.public === false) {
+            Service.findOneAndUpdate(
+              { _id: req.params.id },
+              { $set: { public: true } },
+              { new: true }
+            ).then((service) => res.json(service));
+          } else {
+            Service.findOneAndUpdate(
+              { _id: req.params.id },
+              { $set: { public: false } },
+              { new: true }
+            ).then((service) => res.json(service));
+          }
+        })
+        .catch((err) => console.log(err));
     } else {
-      return res.status(401).json({ msg: 'SOmething went wrong' })
+      return res.status(401).json({ msg: "SOmething went wrong" });
     }
+  }
+);
 
-  })
+router.post(
+  "/updateServiceBanner/:id",
+  upload.single("banner"),
 
-
-
-router.post('/updateServiceBanner/:id',
-  upload.single('banner'),
-
-  passport.authenticate('jwt', { session: false }),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    if (req.user.email === 'dhanmoninath@gmail.com') {
-      console.log('req file is ', req.file)
+    if (req.user.email === "dhanmoninath@gmail.com") {
+      console.log("req file is ", req.file);
       const result = await cloudinary.uploader.upload(req.file.path);
-      console.log('result==', result)
+      console.log("result==", result);
 
-      Service.findById({ _id: req.params.id }).then(service => {
-        Service.findOneAndUpdate(
-          { _id: req.params.id },
-          { $set: { banner: result.secure_url } },
-          { new: true }
-        ).then(service => res.json(service))
-      })
+      Service.findById({ _id: req.params.id })
+        .then((service) => {
+          Service.findOneAndUpdate(
+            { _id: req.params.id },
+            { $set: { banner: result.secure_url } },
+            { new: true }
+          ).then((service) => res.json(service));
+        })
 
-
-        .catch(err => console.log(err))
+        .catch((err) => console.log(err));
 
       if (result.secure_url) {
         deleteFile(req.file.filename);
-        console.log('deleting');
+        console.log("deleting");
       }
     } else {
-      return res.status(401).json({ msg: 'SOmething went wrong' })
+      return res.status(401).json({ msg: "SOmething went wrong" });
     }
-
-  })
-
+  }
+);
 
 //upload images for service slideshow
 
 router.post(
-  '/serviceMediaPhotos/:id',
+  "/serviceMediaPhotos/:id",
 
-  upload.array('photos'),
+  upload.array("photos"),
   // passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    console.log('updating...', req.files)
-
     if (req.files) {
-      console.log(req.files)
-      console.log('===========')
-      let result = []
+      let result = [];
       for (let i = 0; i < req.files.length; i++) {
-        console.log('single ==', req.files[i].path)
-        await result.push(await cloudinary.uploader.upload(req.files[i].path))
+        await result.push(await cloudinary.uploader.upload(req.files[i].path));
       }
 
-      console.log(result)
-      console.log('uploaded.......')
-      let finalPhotos = []
-      await result.map(photo => {
-        finalPhotos.push(photo.secure_url)
-      })
-      console.log(finalPhotos)
-      Service.findById({ _id: req.params.id }).then(service => {
-        Service.findOneAndUpdate(
-          { _id: req.params.id },
-          {
-            $set: {
-              mediaPhoto: finalPhotos
-            }
-          },
-          { new: true }
-        ).then(service => {
-          console.log('service===', service)
-          res.json(service)
+      let finalPhotos = [];
+      await result.map((photo) => {
+        finalPhotos.push(photo.secure_url);
+      });
+      Service.findById({ _id: req.params.id })
+        .then((service) => {
+          Service.findOneAndUpdate(
+            { _id: req.params.id },
+            {
+              $set: {
+                mediaPhoto: finalPhotos,
+              },
+            },
+            { new: true }
+          ).then((service) => {
+            res.json(service);
+          });
         })
-      })
 
-
-        .catch(err => console.log(err))
-
+        .catch((err) => console.log(err));
     } else {
-      return res.status(401).json({ msg: 'SOmething went wrong' })
+      return res.status(401).json({ msg: "SOmething went wrong" });
     }
-
-
-
   }
 );
 
-
-router.get('/allServices', (req, res) => {
-
+router.get("/allServices", (req, res) => {
   Service.find()
     .sort({ date: -1 })
-    .then(allservices => {
-      res.status(200).json(allservices)
+    .then((allservices) => {
+      res.status(200).json(allservices);
     })
-    .catch(err =>
-      res.status(404).json({ noServiceFound: 'No service found' })
+    .catch((err) =>
+      res.status(404).json({ noServiceFound: "No service found" })
     );
 });
 
-router.get('/allServices/:id', (req, res) => {
+router.get("/allServices/:id", (req, res) => {
   Service.findById(req.params.id)
-    .then(services => {
-      console.log(services)
-      res.status(200).json(services)
+    .then((services) => {
+      res.status(200).json(services);
     })
-    .catch(err =>
-      res.status(404).json({ noServiceFound: 'No service found' })
+    .catch((err) =>
+      res.status(404).json({ noServiceFound: "No service found" })
     );
 });
 
-router.delete('/allServices/:id', (req, res) => {
+router.delete("/allServices/:id", (req, res) => {
   Service.findById(req.params.id)
-    .then(service => {
+    .then((service) => {
       service.remove().then(() => res.json({ success: true }));
     })
-    .catch(err =>
-      res.status(404).json({ noServiceFound: 'No service found' })
+    .catch((err) =>
+      res.status(404).json({ noServiceFound: "No service found" })
     );
 });
 
 //Send Emails
 
-router.post('/sendEmail', async (req, res) => {
+router.post("/sendEmail", async (req, res) => {
   auth = {
     auth: {
-      api_key: '823230a921388f9aa98ecc6c51e635db-4a62b8e8-e712365d',
-      domain: 'sandboxf7c9e419d357459ab5aecec01e88fe36.mailgun.org'
+      api_key: "823230a921388f9aa98ecc6c51e635db-4a62b8e8-e712365d",
+      domain: "sandboxf7c9e419d357459ab5aecec01e88fe36.mailgun.org",
     },
-
-  }
+  };
   const nodemailerMailgun = nodemailer.createTransport(mg(auth));
   const mailOpts = {
-    from: 'dhanmoninath989@gmail.com',
-    to: 'dhanmoninath989@gmail.com',
-    subject: 'New Service Request !',
+    from: "dhanmoninath989@gmail.com",
+    to: "dhanmoninath989@gmail.com",
+    subject: "New Service Request !",
     html: `<h4>Email From:</h4>
                       <p>Name: ${req.body.name}</p>
                       <p>Email: ${req.body.email}</p>
@@ -367,17 +330,16 @@ router.post('/sendEmail', async (req, res) => {
                       <p>Location: ${req.body.location}</p>
                       <h4>Message: </h4>
                       <p>${req.body.message}</p>
-              `
+              `,
   };
   nodemailerMailgun.sendMail(mailOpts, function (err, info) {
     if (err) {
-      console.log('something wrong happend!', err)
+      console.log("something wrong happend!", err);
     } else {
       console.log("Message sent: %s", info.messageId);
-      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
     }
   });
-})
-
+});
 
 module.exports = router;

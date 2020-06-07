@@ -1,0 +1,14 @@
+.div1{
+    background-color: blue; 
+    height: 100px;
+    width:600px
+}
+#div2{
+    background-color: yellow;
+    height: 200px;
+    width: 200px;
+}
+table, th, td {
+    border: 1px solid black;
+  }
+  
